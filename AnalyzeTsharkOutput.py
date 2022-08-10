@@ -6,7 +6,10 @@ from time import sleep
 
 def scanLoop():
     global runScan
-    while(runScan):
+    while(runScan == "Run" or runScan == "Pause"):
+        while(runScan == "Pause"):
+            print("Scan Paused")
+            sleep(5)
         os.system("sudo tshark -i mon1 -a duration:20 > scanResults.txt")
         macAddresses = set()
         FileHandler = open("scanResults.txt","r")
@@ -32,10 +35,11 @@ def inputLoop():
     while userInput.upper() != 'TERMINATE':
         userInput = input("Input:")
         if userInput.upper() == "START SCAN":
-            runScan = True
-            sLoop.start()
+            runScan = "Run"
+        elif userInput.upper() == "PAUSE SCAN":
+            runScan = "Pause"
         elif userInput.upper() == "STOP SCAN":
-            runScan = False
+            runScan = "Stop"
     
     print("Finishing")
     sleep(5)
@@ -44,10 +48,11 @@ def inputLoop():
 # To Do: Create scan thread dynamically so it can be started again after being stopped.
 # Create a paused input + Loop in the scan thread method to avoid restarting thread
 macPattern = "[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9][a-zA-Z0-9]"
-runScan = True
+runScan = "Pause"
 
 sLoop = threading.Thread(name="scanLoop", target=scanLoop)
 iLoop = threading.Thread(name="inputLoop", target=inputLoop)
 
 
 iLoop.start()
+sLoop.start()
