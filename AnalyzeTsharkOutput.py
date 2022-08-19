@@ -3,6 +3,12 @@ import re
 import os
 import threading
 from time import sleep
+from pubsub import pub
+import meshtastic
+
+def onReceive(packet, interface):
+    global input 
+    input = packet.get('decoded').get('text')
 
 def scanLoop():
     global runScan
@@ -30,7 +36,10 @@ def scanLoop():
     return
 
 def inputLoop():
-    userInput = ''
+    interface = meshtastic.serial_interface.SerialInterface()
+    pub.subscribe(onReceive, "meshtastic.receive.text")
+    interface.sendText("Scanner Connected")
+    global input
     global runScan
     while userInput.upper() != 'TERMINATE':
         userInput = input("Input:")
@@ -38,9 +47,12 @@ def inputLoop():
             runScan = "Run"
         elif userInput.upper() == "PAUSE SCAN":
             runScan = "Pause"
+        elif userInput.upper() == "HELP":
+            print(helpText)
         elif userInput.upper() == "STOP SCAN":
             runScan = "Stop"
     
+    runScan = "Stop"
     print("Finishing")
     sleep(5)
 
@@ -48,7 +60,11 @@ def inputLoop():
 # To Do: Create scan thread dynamically so it can be started again after being stopped.
 # Create a paused input + Loop in the scan thread method to avoid restarting thread
 macPattern = "[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9][a-zA-Z0-9]"
+helpText = "Commands: \n Start Scan \n Pause Scan \n Stop Scan \n Terminate"
 runScan = "Pause"
+input = ""
+
+
 
 sLoop = threading.Thread(name="scanLoop", target=scanLoop)
 iLoop = threading.Thread(name="inputLoop", target=inputLoop)
